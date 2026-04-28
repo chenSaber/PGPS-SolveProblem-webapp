@@ -1,0 +1,30 @@
+线段长度	Line Segment
+角之间的关系（平分，互补，互余）	Angle
+平行线夹角关系	Parallel Lines
+三角形（三角和180， 内外角关系）	Angle Relation in Triangle
+等腰（边）三角形	Isosceles (Equilateral) Triangle
+三角形角平分线（内心）	Angle Bisector of Triangle
+三角形中线（重心）	Median of Triangle
+三角形中割线	Midsegment of Triangle 
+三角形垂直平分线（外心）	Perpendicular Bisector of Triangle
+多边形全等	Polygon Congruence
+平行线的相似	Similarity in Parallel Line
+多边形相似	Polygon Similarity
+直角三角形（几何平均、内部相似）	Geometric Mean
+直角三角形（勾股定理）	Pythagorean Theorem
+三角函数及定理	Trigonometry
+多边形角度	Polygon Angle
+平行四边形(角，线)	Parallelogram
+矩形（角，线）	Rectangle
+菱形和正方形（角，线）	Rhombus and Square
+梯形和风筝形（角，线）	Trapezoid and Kite
+圆（圆心角，弧度，弧长）	Circle Chord
+圆（半径，直径，弦）	Arc Angle
+圆（相切）	Tangent
+圆（内切角）	Inscribed Angle
+圆（割线角度）	Secant Angle
+圆（割线长度）	Secant Segment
+三角形周长面积	Perimeter and Area of Triangle
+四边形周长和面积	Perimeter and Area of Quadrangle
+多边形面积和周长	Perimeter and Area of Polygon
+圆(阴影)面积和周长	Circumference and Area of Circle

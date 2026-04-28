@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>PGPS9K 几何推理可视化</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <style>
+        body { margin: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .header-title { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+        .header-badge { background: #e74c3c; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .container { display: flex; padding: 20px; gap: 20px; height: calc(100vh - 110px); box-sizing: border-box; }
+        .panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow-y: auto; }
+        .left-panel { flex: 45; border-top: 5px solid #3498db; display: flex; flex-direction: column; gap: 15px; }
+        .right-panel { flex: 55; border-top: 5px solid #2ecc71; display: flex; flex-direction: column; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+        .section-title { font-size: 16px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+
+        /* 图片上传区样式 */
+        .image-placeholder { border: 2px dashed #bdc3c7; border-radius: 8px; min-height: 150px; display: flex; align-items: center; justify-content: center; color: #7f8c8d; background: #f8f9fa; cursor: pointer; transition: all 0.3s; overflow: hidden; padding: 10px; text-align: center;}
+        .image-placeholder:hover { border-color: #3498db; color: #3498db; background: #ebf5fb; }
+        .preview-img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .step-box { background: #f8f9fa; border-left: 4px solid #2ecc71; padding: 15px; margin-bottom: 15px; border-radius: 0 8px 8px 0; transition: all 0.3s ease; }
+
+        /* 👇 核心修复：允许横向滚动，防止公式溢出 */
+        .math-equation {
+            font-size: 20px;
+            margin-top: 15px;
+            color: #2c3e50;
+            background: white;
+            padding: 15px 15px 20px 15px; /* 底部多留点空间给滚动条 */
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            overflow-x: auto;     /* 开启横向滚动 */
+            overflow-y: hidden;
+            white-space: nowrap;  /* 防止公式被暴力挤压变形 */
+        }
+
+        /* 👇 为公式区域定制一个漂亮、优雅的横向滚动条 */
+        .math-equation::-webkit-scrollbar {
+            height: 8px;
+        }
+        .math-equation::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .math-equation::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .math-equation::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .model-card { background: #e1f5fe; border: 1px solid #b3e5fc; padding: 12px 15px; border-radius: 8px; font-size: 13px; color: #0277bd; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; margin-bottom: 5px; }
+    </style>
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }, startup: { typeset: false } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <div class="header-title"> PGPS9K 平面几何问题自动求解系统</div>
+        </div>
+
+        <div class="container">
+            <div class="panel left-panel">
+                <div class="model-card">
+                    <div style="font-size: 20px;"></div>
+                    <div>
+                        <strong>当前挂载推理引擎：</strong> PGPS-Net <br>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 10px;">1.  题目原图</div>
+                <input type="file" id="fileInput" style="display: none;" @change="handleImageUpload" accept="image/*">
+
+                <div class="image-placeholder" @click="triggerUpload">
+                    <span v-if="!imageUrl" style="font-size: 15px;">
+                        + 点击上传几何测试图片<br>
+                        <span style="font-size: 12px; color: #95a5a6; display: block; margin-top: 5px;">激活 ResNet10 视觉特征提取，显著提升推理准确率</span>
+                    </span>
+                    <img v-else :src="imageUrl" class="preview-img" title="点击可更换图片">
+                </div>
+
+                <div class="section-title" style="margin-top: 5px;">2. 题干自然语言 (Text)</div>
+                <el-input v-model="formData.text" type="textarea" :rows="2" placeholder="例如：Find the length of AB."></el-input>
+
+                <el-row :gutter="15">
+                    <el-col :span="12">
+                        <div class="section-title" style="margin-top: 10px;">3. 拓扑结构序列</div>
+                        <el-input v-model="formData.stru_seqs" type="textarea" :rows="5" placeholder="输入点线关系..."></el-input>
+                    </el-col>
+                    <el-col :span="12">
+                        <div class="section-title" style="margin-top: 10px;">4. 语义逻辑序列</div>
+                        <el-input v-model="formData.sem_seqs" type="textarea" :rows="5" placeholder="输入垂直、相等、数值关系..."></el-input>
+                    </el-col>
+                </el-row>
+            </div>
+
+            <div class="panel right-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <el-input v-model="searchProbId" placeholder="输入题号 (如 prob_4619)" style="width: 200px;">
+                            <template #prefix><el-icon><Search /></el-icon></template>
+                        </el-input>
+                        <el-button @click="loadProblemById" :loading="isLoadingProb">快速加载</el-button>
+                    </div>
+                    <el-button type="primary" size="large" @click="startSolving" :loading="isSolving">
+                         开始求解
+                    </el-button>
+                </div>
+
+                <div style="margin-bottom: 15px;" v-if="Object.keys(varMap).length > 0">
+                    <el-tag type="info" size="large" style="width: 100%; font-size: 14px; background-color: #f8fafc; border-color: #e2e8f0; color: #475569;">
+                         AI 变量关系提取：
+                        <span v-for="(val, key) in varMap" :key="key" style="margin-left: 15px; font-weight: bold; color: #334155;">
+                            {{ key }} = {{ val }}
+                        </span>
+                    </el-tag>
+                </div>
+
+                <div v-if="steps.length > 0">
+                    <div v-for="(step, index) in steps" :key="index" class="step-box">
+                        <div style="font-weight: bold; color: #34495e; font-size: 15px; margin-bottom: 10px;">
+                            Step {{ step.step_num }} |
+                            <span style="color: #e67e22; font-weight: normal;">{{ step.action }}</span>
+                        </div>
+                        <div class="math-equation">
+                            $$ {{ step.equation }} $$
+                        </div>
+                    </div>
+
+                    <el-alert v-if="finalAnswer !== null" :title="' 符号引擎求解完毕，最终答案：' + finalAnswer" type="success" show-icon style="margin-top: 20px;">
+                    </el-alert>
+                </div>
+
+                <div v-else-if="!isSolving" style="text-align: center; color: #95a5a6; margin-top: 100px;">
+                    <svg viewBox="0 0 1024 1024" width="64" height="64" style="fill: #dcdde1; margin-bottom: 15px;"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"/><path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-21.5c0-11.4 4.1-22.4 11.5-31 7.6-8.9 18.2-14.6 29.8-16.4 46.1-7.1 84.7-41 84.7-98.4 0-39.3-17.2-76-48.4-102.4zM512 732c-22.1 0-40 17.9-40 40s17.9 40 40 40 40-17.9 40-40-17.9-40-40-40z"/></svg>
+                    <div>系统处于待命状态。上传图片并核对文本序列后，点击“开始求解”。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        const { createApp, ref, reactive, nextTick } = Vue;
+        const { ElMessage } = ElementPlus;
+
+        const app = createApp({
+            setup() {
+                const isSolving = ref(false);
+                const steps = ref([]);
+                const finalAnswer = ref(null);
+                const varMap = ref({});
+
+                const imageUrl = ref(null);      // 存本地预览 URL
+                const imageBase64 = ref(null);   // 存转码后的 Base64 给后端
+
+                // 默认测试数据
+                const formData = reactive({
+                    text: '',
+                    stru_seqs: '',
+                    sem_seqs: ''
+                });
+
+                // 1. 定义新变量
+                const searchProbId = ref('prob_0');
+                const isLoadingProb = ref(false);
+
+                // 2. 编写加载函数
+                const loadProblemById = async () => {
+                    if (!searchProbId.value) return;
+                    isLoadingProb.value = true;
+                    try {
+                        const response = await axios.get(`http://127.0.0.1:8000/get_test_problem/${searchProbId.value}`);
+                        const data = response.data;
+
+                        // 自动填表
+                        formData.text = data.text;
+                        formData.stru_seqs = data.stru_seqs;
+                        formData.sem_seqs = data.sem_seqs;
+
+                        // 自动加载图片
+                        imageUrl.value = data.image_base64;
+                        imageBase64.value = data.image_base64;
+
+                        ElMessage.success(`题目 ${searchProbId.value} 加载成功`);
+                    } catch (error) {
+                        ElMessage.error("题目加载失败，请检查题号是否正确");
+                    } finally {
+                        isLoadingProb.value = false;
+                    }
+                };
+
+                // 触发图片上传选择
+                const triggerUpload = () => {
+                    document.getElementById('fileInput').click();
+                };
+
+                // 处理图片读取与 Base64 编码
+                const handleImageUpload = (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        imageUrl.value = URL.createObjectURL(file); // 本地预览
+
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            imageBase64.value = reader.result; // 保存 Base64 编码
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+
+                // 点击求解按钮
+                const startSolving = async () => {
+                    isSolving.value = true;
+                    steps.value = [];
+                    finalAnswer.value = null;
+                    varMap.value = {};
+
+                    try {
+                        const response = await axios.post('http://127.0.0.1:8000/solve', {
+                            prob_id: searchProbId.value || "custom_expert_01",
+                            text: formData.text,
+                            stru_seqs: formData.stru_seqs.split('\n'),
+                            sem_seqs: formData.sem_seqs.split('\n'),
+                            image_base64: imageBase64.value // 发送图片数据！如果没传图，这里是 null
+                        });
+
+                        setTimeout(() => {
+                            const resultData = response.data;
+                            steps.value = resultData.steps;
+                            finalAnswer.value = resultData.final_answer;
+                            varMap.value = resultData.var_map || {};
+
+                            nextTick(() => {
+                                if (window.MathJax) {
+                                    MathJax.typesetPromise().catch((err) => console.log('MathJax Error: ', err));
+                                }
+                            });
+                            isSolving.value = false;
+                        }, 500);
+
+                    } catch (error) {
+                        console.error("请求失败：", error);
+                        alert("连接后端失败！请检查 FastAPI 服务状态及网络。");
+                        isSolving.value = false;
+                    }
+                };
+
+                // 3. 在 return 中暴露给 HTML 模板
+                return {
+                    searchProbId, isLoadingProb, loadProblemById,
+                    isSolving, steps, finalAnswer, varMap, formData, imageUrl, triggerUpload, handleImageUpload, startSolving
+                };
+            }
+        });
+
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

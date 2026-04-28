@@ -1,0 +1,165 @@
+2026-04-06 15:33:56,081 - INFO: ============ Initialized logger ============
+2026-04-06 15:33:56,081 - INFO: 
+				MLM_pretrain_path: ./pretraining_model/LM_MODEL.pth
+				batch_size: 32
+				beam_size: 10
+				cosine_decay_end: 0.0
+				criterion: MaskedCrossEntropy
+				dataset: PGPS9K
+				dataset_dir: ./datasets/PGPS9K_all
+				debug: False
+				decoder_embedding_size: 512
+				decoder_hidden_size: 512
+				decoder_layers: 2
+				decoder_type: rnn_decoder
+				diagram_size: 128
+				dropout_rate: 0.2
+				dump_path: ./log/2026-04-06-15-33-56
+				encoder_embedding_size: 256
+				encoder_hidden_size: 512
+				encoder_layers: 2
+				encoder_type: gru
+				eval_epoch: 40
+				eval_method: completion
+				evaluate_only: True
+				init_method: env://
+				local_rank: 0
+				lr: 0.001
+				lr_LM: 0.0001
+				max_epoch: 540
+				max_input_len: 400
+				max_output_len: 40
+				nprocs: 1
+				optimizer_type: ADAMW
+				pretrain_emb_path: 
+				pretrain_vis_path: 
+				print_freq: 20
+				random_prob: 0.5
+				resume_model: ./log/2026-03-02-21-31-47/best_model.pth
+				scheduler_factor: 0.5
+				scheduler_step: [160, 280, 360, 440, 500]
+				scheduler_type: warmup
+				seed: 202302
+				trim_min_count: 5
+				use_MLM_pretrain: True
+				visual_backbone: ResNet10
+				vocab_src_path: ./vocab/vocab_src.txt
+				vocab_tgt_path: ./vocab/vocab_tgt.txt
+				warm_epoch: 40
+				weight_decay: 0.01
+				without_stru: False
+				workers: 0
+2026-04-06 15:33:56,083 - INFO: The experiment results will be stored in ./log/2026-04-06-15-33-56
+2026-04-06 15:33:57,114 - INFO: Visual backbone choose to train from scratch
+2026-04-06 15:33:55,098 - INFO: Network(
+  (visual_extractor): ResNet(
+    (trunk): Sequential(
+      (0): Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+      (1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+      (3): MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
+      (4): SimpleBlock(
+        (C1): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (BN1): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (C2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (BN2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu1): ReLU(inplace=True)
+        (relu2): ReLU(inplace=True)
+      )
+      (5): SimpleBlock(
+        (C1): Conv2d(64, 128, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (BN1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (C2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (BN2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu1): ReLU(inplace=True)
+        (relu2): ReLU(inplace=True)
+        (shortcut): Conv2d(64, 128, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (BNshortcut): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (6): SimpleBlock(
+        (C1): Conv2d(128, 256, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (BN1): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (C2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (BN2): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu1): ReLU(inplace=True)
+        (relu2): ReLU(inplace=True)
+        (shortcut): Conv2d(128, 256, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (BNshortcut): BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (7): SimpleBlock(
+        (C1): Conv2d(256, 512, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)
+        (BN1): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (C2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        (BN2): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (relu1): ReLU(inplace=True)
+        (relu2): ReLU(inplace=True)
+        (shortcut): Conv2d(256, 512, kernel_size=(1, 1), stride=(2, 2), bias=False)
+        (BNshortcut): BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (8): AvgPool2d(kernel_size=4, stride=4, padding=0)
+      (9): Flatten()
+    )
+  )
+  (encoder): GRU(
+    (gru): GRU(256, 512, num_layers=2, batch_first=True, dropout=0.2, bidirectional=True)
+    (dropout): Dropout(p=0.2, inplace=False)
+  )
+  (decoder): DecoderRNN(
+    (em_dropout): Dropout(p=0.2, inplace=False)
+    (embedding_tgt): Embedding(55, 512, padding_idx=0)
+    (gru): GRU(1024, 512, num_layers=2, batch_first=True, dropout=0.2)
+    (attn): Attn(
+      (attn): Linear(in_features=1024, out_features=512, bias=True)
+      (score): Linear(in_features=512, out_features=1, bias=False)
+    )
+    (score): Score(
+      (attn): Linear(in_features=1536, out_features=512, bias=True)
+      (score): Linear(in_features=512, out_features=1, bias=False)
+    )
+  )
+  (visual_emb_unify): Sequential(
+    (0): Linear(in_features=512, out_features=256, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=256, out_features=256, bias=True)
+  )
+  (mlm_pretrain): MLMTransformerPretrain(
+    (transformer_en): TransformerEncoder(
+      (encoder): TransformerEncoder(
+        (layers): ModuleList(
+          (0-5): 6 x TransformerEncoderLayer(
+            (self_attn): MultiheadAttention(
+              (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+            )
+            (linear1): Linear(in_features=256, out_features=1024, bias=True)
+            (dropout): Dropout(p=0.2, inplace=False)
+            (linear2): Linear(in_features=1024, out_features=256, bias=True)
+            (norm1): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+            (norm2): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+            (dropout1): Dropout(p=0.2, inplace=False)
+            (dropout2): Dropout(p=0.2, inplace=False)
+          )
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (position): PositionalEncoding(
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+    )
+    (text_embedding_src): Embedding(322, 256, padding_idx=0)
+    (class_tag_embedding): Embedding(6, 256, padding_idx=0)
+    (sect_tag_embedding): Embedding(4, 256, padding_idx=0)
+  )
+)
+2026-04-06 15:33:56,650 - INFO: The whole model has been loaded from ./log/2026-03-02-21-31-47/best_model.pth
+2026-04-06 15:33:56,650 - INFO: The model resumes from epoch 531
+2026-04-06 15:33:58,756 - INFO: Test: [   0/1000]	Time 2.105 (2.105)	Ans_Acc 0.0000 (0.0000)	Eq_Acc 0.0000 (0.0000)
+2026-04-06 15:34:33,999 - INFO: Test: [ 100/1000]	Time 0.377 (0.370)	Ans_Acc 0.0000 (0.5545)	Eq_Acc 0.0000 (0.4851)
+2026-04-06 15:35:11,243 - INFO: Test: [ 200/1000]	Time 0.411 (0.371)	Ans_Acc 1.0000 (0.5572)	Eq_Acc 1.0000 (0.5025)
+2026-04-06 15:35:47,283 - INFO: Test: [ 300/1000]	Time 0.536 (0.368)	Ans_Acc 1.0000 (0.5615)	Eq_Acc 1.0000 (0.5183)
+2026-04-06 15:36:25,684 - INFO: Test: [ 400/1000]	Time 0.376 (0.372)	Ans_Acc 1.0000 (0.5461)	Eq_Acc 1.0000 (0.5062)
+2026-04-06 15:37:01,029 - INFO: Test: [ 500/1000]	Time 0.504 (0.368)	Ans_Acc 0.0000 (0.5429)	Eq_Acc 0.0000 (0.5110)
+2026-04-06 15:37:42,930 - INFO: Test: [ 600/1000]	Time 0.375 (0.377)	Ans_Acc 1.0000 (0.5374)	Eq_Acc 0.0000 (0.5008)
+2026-04-06 15:38:21,360 - INFO: Test: [ 700/1000]	Time 0.370 (0.378)	Ans_Acc 1.0000 (0.5506)	Eq_Acc 1.0000 (0.5136)
+2026-04-06 15:38:56,647 - INFO: Test: [ 800/1000]	Time 0.377 (0.375)	Ans_Acc 1.0000 (0.5605)	Eq_Acc 1.0000 (0.5218)
+2026-04-06 15:39:36,087 - INFO: Test: [ 900/1000]	Time 0.353 (0.377)	Ans_Acc 0.0000 (0.5616)	Eq_Acc 0.0000 (0.5250)
+2026-04-06 15:40:13,464 - INFO: ----------Epoch:531, test answer_acc 0.5560, equation_acc 0.5210 ---------
