@@ -2,13 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>PGPS9K 几何推理可视化</title>
+    <title>PGPS9K 几何推理可视化 - 专家模式</title>
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
     <style>
         body { margin: 0; background-color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
         .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .header-title { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
-        .header-badge { background: #e74c3c; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .container { display: flex; padding: 20px; gap: 20px; height: calc(100vh - 110px); box-sizing: border-box; }
         .panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow-y: auto; }
         .left-panel { flex: 45; border-top: 5px solid #3498db; display: flex; flex-direction: column; gap: 15px; }
@@ -19,44 +18,34 @@
 
         .section-title { font-size: 16px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 
-        /* 图片上传区样式 */
         .image-placeholder { border: 2px dashed #bdc3c7; border-radius: 8px; min-height: 150px; display: flex; align-items: center; justify-content: center; color: #7f8c8d; background: #f8f9fa; cursor: pointer; transition: all 0.3s; overflow: hidden; padding: 10px; text-align: center;}
         .image-placeholder:hover { border-color: #3498db; color: #3498db; background: #ebf5fb; }
         .preview-img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
         .step-box { background: #f8f9fa; border-left: 4px solid #2ecc71; padding: 15px; margin-bottom: 15px; border-radius: 0 8px 8px 0; transition: all 0.3s ease; }
 
-        /* 👇 核心修复：允许横向滚动，防止公式溢出 */
         .math-equation {
             font-size: 20px;
             margin-top: 15px;
             color: #2c3e50;
             background: white;
-            padding: 15px 15px 20px 15px; /* 底部多留点空间给滚动条 */
+            padding: 15px 15px 20px 15px;
             border-radius: 6px;
             border: 1px solid #e2e8f0;
-            overflow-x: auto;     /* 开启横向滚动 */
+            overflow-x: auto;
             overflow-y: hidden;
-            white-space: nowrap;  /* 防止公式被暴力挤压变形 */
+            white-space: nowrap;
         }
 
-        /* 👇 为公式区域定制一个漂亮、优雅的横向滚动条 */
-        .math-equation::-webkit-scrollbar {
-            height: 8px;
-        }
-        .math-equation::-webkit-scrollbar-track {
-            background: #f8fafc;
-            border-radius: 4px;
-        }
-        .math-equation::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .math-equation::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
+        .math-equation::-webkit-scrollbar { height: 8px; }
+        .math-equation::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        .math-equation::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .math-equation::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         .model-card { background: #e1f5fe; border: 1px solid #b3e5fc; padding: 12px 15px; border-radius: 8px; font-size: 13px; color: #0277bd; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; margin-bottom: 5px; }
+
+        /* 构建器工具栏样式 */
+        .builder-toolbar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
     </style>
     <script>
         MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }, startup: { typeset: false } };
@@ -74,32 +63,113 @@
                 <div class="model-card">
                     <div style="font-size: 20px;"></div>
                     <div>
-                        <strong>当前挂载推理引擎：</strong> PGPS-Net <br>
+                        <strong>当前挂载推理引擎：</strong> PGPS-Net (ResNet10 视觉特征 + CAS 符号代数引擎)<br>
                     </div>
                 </div>
 
-                <div class="section-title" style="margin-top: 10px;">1.  题目原图</div>
+                <div class="section-title" style="margin-top: 10px;">1. 题目原图</div>
                 <input type="file" id="fileInput" style="display: none;" @change="handleImageUpload" accept="image/*">
 
                 <div class="image-placeholder" @click="triggerUpload">
                     <span v-if="!imageUrl" style="font-size: 15px;">
                         + 点击上传几何测试图片<br>
-                        <span style="font-size: 12px; color: #95a5a6; display: block; margin-top: 5px;">激活 ResNet10 视觉特征提取，显著提升推理准确率</span>
                     </span>
                     <img v-else :src="imageUrl" class="preview-img" title="点击可更换图片">
                 </div>
 
-                <div class="section-title" style="margin-top: 5px;">2. 题干自然语言 (Text)</div>
-                <el-input v-model="formData.text" type="textarea" :rows="2" placeholder="例如：Find the length of AB."></el-input>
+                <div class="section-title" style="margin-top: 5px;">2. 题干自然语言 (包含周长面积等整体信息)</div>
+                <el-input v-model="formData.text" type="textarea" :rows="2" placeholder="填写英文题干。例如面积周长信息：The area of ABCD is 150."></el-input>
 
-                <el-row :gutter="15">
-                    <el-col :span="12">
-                        <div class="section-title" style="margin-top: 10px;">3. 拓扑结构序列</div>
-                        <el-input v-model="formData.stru_seqs" type="textarea" :rows="5" placeholder="输入点线关系..."></el-input>
+                <el-row :gutter="15" style="margin-top: 10px;">
+                    <el-col :span="11">
+                        <div class="section-title">3. 拓扑结构构建器</div>
+                        <div class="builder-toolbar">
+                            <el-input v-model="struBuilder.points" placeholder="点(如A B C)" size="small" style="width: 85px;" @keyup.enter="addStruLine"></el-input>
+                            <el-button type="primary" size="small" @click="addStruLine" plain>+ 共线</el-button>
+
+                            <div style="width: 100%; height: 1px; background: #e2e8f0; margin: 2px 0;"></div>
+
+                            <el-input v-model="struBuilder.circleCenter" placeholder="圆心(O)" size="small" style="width: 65px;"></el-input>
+                            <el-input v-model="struBuilder.circlePoints" placeholder="圆上点(A B)" size="small" style="width: 85px;" @keyup.enter="addStruCircle"></el-input>
+                            <el-button type="primary" size="small" @click="addStruCircle" plain>+ 共圆</el-button>
+                        </div>
+                        <el-input v-model="formData.stru_seqs" type="textarea" :rows="6" placeholder="拓扑结构将生成在这里，也可手动修改..."></el-input>
                     </el-col>
-                    <el-col :span="12">
-                        <div class="section-title" style="margin-top: 10px;">4. 语义逻辑序列</div>
-                        <el-input v-model="formData.sem_seqs" type="textarea" :rows="5" placeholder="输入垂直、相等、数值关系..."></el-input>
+
+                    <el-col :span="13">
+                        <div class="section-title">4. 语义逻辑构建器</div>
+                        <div class="builder-toolbar">
+                            <el-select v-model="semBuilder.type" placeholder="关系类型" size="small" style="width: 105px;" @change="clearSemInputs">
+                                <el-option label="线段赋值" value="length"></el-option>
+                                <el-option label="角度赋值" value="angle"></el-option>
+                                <el-option label="垂直关系" value="perp"></el-option>
+                                <el-option label="平行关系" value="parallel"></el-option>
+                                <el-option label="相等关系" value="equal"></el-option>
+                                <el-option label="直径赋值" value="diameter"></el-option>
+                                <el-option label="圆弧度数" value="arc_angle"></el-option>
+                                <el-option label="圆弧长度" value="arc_length"></el-option>
+                                <el-option label="相似关系" value="similar"></el-option>
+                            </el-select>
+
+                            <template v-if="semBuilder.type === 'length'">
+                                <el-input v-model="semBuilder.v1" placeholder="线(AB)" size="small" style="width: 70px;"></el-input>
+                                <span>=</span>
+                                <el-input v-model="semBuilder.v2" placeholder="值(5或x)" size="small" style="width: 70px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'angle'">
+                                <el-input v-model="semBuilder.v1" placeholder="角(ABC)" size="small" style="width: 80px;"></el-input>
+                                <span>=</span>
+                                <el-input v-model="semBuilder.v2" placeholder="度数(90或x)" size="small" style="width: 70px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'perp'">
+                                <el-input v-model="semBuilder.v1" placeholder="线1(AB)" size="small" style="width: 65px;"></el-input>
+                                <span>⊥</span>
+                                <el-input v-model="semBuilder.v2" placeholder="线2(CD)" size="small" style="width: 65px;"></el-input>
+                                <span>于</span>
+                                <el-input v-model="semBuilder.v3" placeholder="点(B)" size="small" style="width: 55px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'parallel'">
+                                <el-input v-model="semBuilder.v1" placeholder="线1(AB)" size="small" style="width: 70px;"></el-input>
+                                <span>∥</span>
+                                <el-input v-model="semBuilder.v2" placeholder="线2(CD)" size="small" style="width: 70px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'equal'">
+                                <el-input v-model="semBuilder.v1" placeholder="项1(AB)" size="small" style="width: 70px;"></el-input>
+                                <span>=</span>
+                                <el-input v-model="semBuilder.v2" placeholder="项2(CD)" size="small" style="width: 70px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'diameter'">
+                                <el-input v-model="semBuilder.v1" placeholder="圆(C0)" size="small" style="width: 70px;"></el-input>
+                                <span>直径=</span>
+                                <el-input v-model="semBuilder.v2" placeholder="值(6)" size="small" style="width: 60px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'arc_angle'">
+                                <el-input v-model="semBuilder.v1" placeholder="弧(AB)" size="small" style="width: 70px;"></el-input>
+                                <span>度数=</span>
+                                <el-input v-model="semBuilder.v2" placeholder="值(90)" size="small" style="width: 60px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'arc_length'">
+                                <el-input v-model="semBuilder.v1" placeholder="弧(AB)" size="small" style="width: 70px;"></el-input>
+                                <span>弧长=</span>
+                                <el-input v-model="semBuilder.v2" placeholder="值(5)" size="small" style="width: 60px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <template v-if="semBuilder.type === 'similar'">
+                                <el-input v-model="semBuilder.v1" placeholder="多边1(ABC)" size="small" style="width: 85px;"></el-input>
+                                <span>∽</span>
+                                <el-input v-model="semBuilder.v2" placeholder="多边2(DEF)" size="small" style="width: 85px;" @keyup.enter="addSem"></el-input>
+                            </template>
+
+                            <el-button type="success" size="small" @click="addSem" plain style="margin-left: auto;">+ 记录</el-button>
+                        </div>
+                        <el-input v-model="formData.sem_seqs" type="textarea" :rows="6" placeholder="语义逻辑将生成在这里，也可手动修改..."></el-input>
                     </el-col>
                 </el-row>
             </div>
@@ -107,13 +177,13 @@
             <div class="panel right-panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; gap: 10px;">
                     <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                        <el-input v-model="searchProbId" placeholder="输入题号 (如 prob_4619)" style="width: 200px;">
+                        <el-input v-model="searchProbId" placeholder="输入题号加载测试用例" style="width: 200px;">
                             <template #prefix><el-icon><Search /></el-icon></template>
                         </el-input>
                         <el-button @click="loadProblemById" :loading="isLoadingProb">快速加载</el-button>
                     </div>
                     <el-button type="primary" size="large" @click="startSolving" :loading="isSolving">
-                         开始求解
+                         🚀 开始解析求解
                     </el-button>
                 </div>
 
@@ -143,7 +213,7 @@
 
                 <div v-else-if="!isSolving" style="text-align: center; color: #95a5a6; margin-top: 100px;">
                     <svg viewBox="0 0 1024 1024" width="64" height="64" style="fill: #dcdde1; margin-bottom: 15px;"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"/><path d="M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-21.5c0-11.4 4.1-22.4 11.5-31 7.6-8.9 18.2-14.6 29.8-16.4 46.1-7.1 84.7-41 84.7-98.4 0-39.3-17.2-76-48.4-102.4zM512 732c-22.1 0-40 17.9-40 40s17.9 40 40 40 40-17.9 40-40-17.9-40-40-40z"/></svg>
-                    <div>系统处于待命状态。上传图片并核对文本序列后，点击“开始求解”。</div>
+                    <div>系统处于待命状态。利用左侧构建器无代码录入序列，核对无误后点击求解。</div>
                 </div>
             </div>
         </div>
@@ -164,37 +234,103 @@
                 const finalAnswer = ref(null);
                 const varMap = ref({});
 
-                const imageUrl = ref(null);      // 存本地预览 URL
-                const imageBase64 = ref(null);   // 存转码后的 Base64 给后端
+                const imageUrl = ref(null);
+                const imageBase64 = ref(null);
 
-                // 默认测试数据
-                const formData = reactive({
-                    text: '',
-                    stru_seqs: '',
-                    sem_seqs: ''
-                });
-
-                // 1. 定义新变量
+                const formData = reactive({ text: '', stru_seqs: '', sem_seqs: '' });
                 const searchProbId = ref('prob_0');
                 const isLoadingProb = ref(false);
 
-                // 2. 编写加载函数
+                // 👇 拓扑结构构建器逻辑
+                const struBuilder = reactive({ points: '', circleCenter: '', circlePoints: '' });
+                const addStruLine = () => {
+                    const pts = struBuilder.points.trim().toUpperCase().replace(/,/g, ' ').replace(/\s+/g, ' ');
+                    if (!pts) return;
+                    const newLine = `line ${pts}`;
+                    formData.stru_seqs += (formData.stru_seqs ? '\n' : '') + newLine;
+                    struBuilder.points = '';
+                };
+                // 🚀 新增：共圆点构建
+                const addStruCircle = () => {
+                    const center = struBuilder.circleCenter.trim().toUpperCase();
+                    const pts = struBuilder.circlePoints.trim().toUpperCase().replace(/,/g, ' ').replace(/\s+/g, ' ');
+                    if (!pts) return;
+                    let newLine = `\\odot `;
+                    if (center) newLine += `${center} lieson ${pts}`;
+                    else newLine += `lieson ${pts}`;
+                    formData.stru_seqs += (formData.stru_seqs ? '\n' : '') + newLine;
+                    struBuilder.circleCenter = '';
+                    struBuilder.circlePoints = '';
+                };
+
+                // 👇 语义逻辑构建器逻辑
+                const semBuilder = reactive({ type: 'length', v1: '', v2: '', v3: '' });
+                const clearSemInputs = () => { semBuilder.v1 = ''; semBuilder.v2 = ''; semBuilder.v3 = ''; };
+
+                const addSem = () => {
+                    let newLine = '';
+                    const v1 = semBuilder.v1.trim();
+                    const v2 = semBuilder.v2.trim();
+                    const v3 = semBuilder.v3.trim();
+
+                    if (semBuilder.type === 'length') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入完整的线段和值'); return; }
+                        newLine = `${v1.toUpperCase()} = ${v2}`;
+                    }
+                    else if (semBuilder.type === 'angle') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入完整的角和度数'); return; }
+                        newLine = `m \\angle ${v1.toUpperCase()} = ${v2}`;
+                    }
+                    else if (semBuilder.type === 'perp') {
+                        if (!v1 || !v2 || !v3) { ElMessage.warning('请输入垂直相关的三项参数'); return; }
+                        newLine = `${v1.toUpperCase()} \\perp ${v2.toUpperCase()} on ${v3.toUpperCase()}`;
+                    }
+                    else if (semBuilder.type === 'parallel') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入平行的两条线'); return; }
+                        newLine = `${v1.toUpperCase()} \\parallel ${v2.toUpperCase()}`;
+                    }
+                    else if (semBuilder.type === 'equal') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入相等的两项'); return; }
+                        newLine = `${v1} = ${v2}`;
+                    }
+                    // 🚀 新增：圆弧度数
+                    else if (semBuilder.type === 'arc_angle') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入完整的弧和度数'); return; }
+                        newLine = `m \\widehat ${v1.toUpperCase()} = ${v2}`;
+                    }
+                    // 🚀 新增：圆弧长度
+                    else if (semBuilder.type === 'arc_length') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入完整的弧和长度'); return; }
+                        newLine = `\\widehat ${v1.toUpperCase()} = ${v2}`;
+                    }
+                    // 🚀 新增：直径赋值
+                    else if (semBuilder.type === 'diameter') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入圆的代号和直径值'); return; }
+                        newLine = `\\Phi ${v1.toUpperCase()} = ${v2}`;
+                    }
+                    // 🚀 新增：相似关系
+                    else if (semBuilder.type === 'similar') {
+                        if (!v1 || !v2) { ElMessage.warning('请输入相似的两个图形'); return; }
+                        newLine = `${v1.toUpperCase()} \\sim ${v2.toUpperCase()}`;
+                    }
+
+                    if (newLine) {
+                        formData.sem_seqs += (formData.sem_seqs ? '\n' : '') + newLine;
+                        clearSemInputs();
+                    }
+                };
+
                 const loadProblemById = async () => {
                     if (!searchProbId.value) return;
                     isLoadingProb.value = true;
                     try {
                         const response = await axios.get(`http://127.0.0.1:8000/get_test_problem/${searchProbId.value}`);
                         const data = response.data;
-
-                        // 自动填表
                         formData.text = data.text;
                         formData.stru_seqs = data.stru_seqs;
                         formData.sem_seqs = data.sem_seqs;
-
-                        // 自动加载图片
                         imageUrl.value = data.image_base64;
                         imageBase64.value = data.image_base64;
-
                         ElMessage.success(`题目 ${searchProbId.value} 加载成功`);
                     } catch (error) {
                         ElMessage.error("题目加载失败，请检查题号是否正确");
@@ -203,26 +339,17 @@
                     }
                 };
 
-                // 触发图片上传选择
-                const triggerUpload = () => {
-                    document.getElementById('fileInput').click();
-                };
-
-                // 处理图片读取与 Base64 编码
+                const triggerUpload = () => { document.getElementById('fileInput').click(); };
                 const handleImageUpload = (event) => {
                     const file = event.target.files[0];
                     if (file) {
-                        imageUrl.value = URL.createObjectURL(file); // 本地预览
-
+                        imageUrl.value = URL.createObjectURL(file);
                         const reader = new FileReader();
-                        reader.onload = () => {
-                            imageBase64.value = reader.result; // 保存 Base64 编码
-                        };
+                        reader.onload = () => { imageBase64.value = reader.result; };
                         reader.readAsDataURL(file);
                     }
                 };
 
-                // 点击求解按钮
                 const startSolving = async () => {
                     isSolving.value = true;
                     steps.value = [];
@@ -233,9 +360,9 @@
                         const response = await axios.post('http://127.0.0.1:8000/solve', {
                             prob_id: searchProbId.value || "custom_expert_01",
                             text: formData.text,
-                            stru_seqs: formData.stru_seqs.split('\n'),
-                            sem_seqs: formData.sem_seqs.split('\n'),
-                            image_base64: imageBase64.value // 发送图片数据！如果没传图，这里是 null
+                            stru_seqs: formData.stru_seqs.split('\n').filter(s => s.trim()),
+                            sem_seqs: formData.sem_seqs.split('\n').filter(s => s.trim()),
+                            image_base64: imageBase64.value
                         });
 
                         setTimeout(() => {
@@ -259,10 +386,11 @@
                     }
                 };
 
-                // 3. 在 return 中暴露给 HTML 模板
                 return {
                     searchProbId, isLoadingProb, loadProblemById,
-                    isSolving, steps, finalAnswer, varMap, formData, imageUrl, triggerUpload, handleImageUpload, startSolving
+                    isSolving, steps, finalAnswer, varMap, formData, imageUrl,
+                    triggerUpload, handleImageUpload, startSolving,
+                    struBuilder, addStruLine, addStruCircle, semBuilder, clearSemInputs, addSem
                 };
             }
         });
